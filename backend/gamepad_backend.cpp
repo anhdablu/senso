@@ -1,6 +1,8 @@
 #include <functional>
 // Eine WebSocket-Bibliothek einbinden (z.B. Crow)
-#include "crow_all.h" 
+// // 1. ZUERST das Makro definieren
+// #define CROW_ENABLE_WEBSOCKETS
+#include "crow.h" 
 
 
 #include <iostream>
@@ -183,15 +185,21 @@ int main() {
     });
 
     // WebSocket-Endpunkt für das React Frontend
+    // CROW_ROUTE(app, "/gamepad")
+    //     .websocket()
+    //     .onopen([&](crow::websocket::connection& conn) { clients.push_back(&conn); })
+    //     .onclose([&](crow::websocket::connection& conn, const std::string&) {
+    //         clients.erase(std::remove(clients.begin(), clients.end(), &conn), clients.end());
+    //     });
     CROW_ROUTE(app, "/gamepad")
-        .websocket()
+        .websocket(&app) // <--- Hier '&app' (bzw. deine Crow-Instanz) übergeben
         .onopen([&](crow::websocket::connection& conn) { clients.push_back(&conn); })
-        .onclose([&](crow::websocket::connection& conn, const std::string&) {
+        .onclose([&](crow::websocket::connection& conn, const std::string& reason, uint16_t /* status_code */) {
             clients.erase(std::remove(clients.begin(), clients.end(), &conn), clients.end());
         });
 
     // --- HIER KÖNNEN IHRE ANDEREN BACKEND TASKS KOEXISTIEREN ---
-    CROW_ROUTE(app, "/api/other-task")([](){ return "Backend macht noch andere Dinge!"; });
+    // CROW_ROUTE(app, "/api/other-task")([](){ return "Backend macht noch andere Dinge!"; });
 
     app.port(8080).multithreaded().run(); // Startet den asynchronen Netzwerk-Server
     gamepad.stop();

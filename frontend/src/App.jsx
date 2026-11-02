@@ -58,26 +58,53 @@ export default function App() {
     setIsPlayingSequence(false);
   };
 
+  // const handleColorClick = (color) => {
+  //   const { isPlayingSequence: isPlaying, isGameOver: isOver, sequence: seq, userSequence: userSeq } = stateRef.current;
+  //   if (isPlaying || isOver || seq.length === 0) return;
+
+  //   playSound(color.hz);
+  //   setActiveColor(color.id);
+  //   setTimeout(() => setActiveColor(null), 200);
+
+  //   const nextUserSeq = [...userSeq, color];
+  //   setUserSequence(nextUserSeq);
+
+  //   const currentStep = nextUserSeq.length - 1;
+  //   if (color.id !== seq[currentStep].id) {
+  //     setIsGameOver(true);
+  //     return;
+  //   }
+
+  //   if (nextUserSeq.length === seq.length) {
+  //     setTimeout(() => startNextLevel(seq), 1200);
+  //   }
+  // };
   const handleColorClick = (color) => {
-    const { isPlayingSequence: isPlaying, isGameOver: isOver, sequence: seq, userSequence: userSeq } = stateRef.current;
+    const { isPlayingSequence: isPlaying, isGameOver: isOver, sequence: seq } = stateRef.current;
     if (isPlaying || isOver || seq.length === 0) return;
 
     playSound(color.hz);
     setActiveColor(color.id);
     setTimeout(() => setActiveColor(null), 200);
 
-    const nextUserSeq = [...userSeq, color];
-    setUserSequence(nextUserSeq);
+    // FUNKTIONALES UPDATE: Garantiert, dass wir immer die echte, 
+    // aktuelle Sequenz des Users als Basis nehmen, egal wie schnell Daten reinkommen.
+    setUserSequence((prevUserSeq) => {
+      const nextUserSeq = [...prevUserSeq, color];
+      const currentStep = nextUserSeq.length - 1;
 
-    const currentStep = nextUserSeq.length - 1;
-    if (color.id !== seq[currentStep].id) {
-      setIsGameOver(true);
-      return;
-    }
+      // Die Validierung muss hier drin stattfinden, da wir hier 'nextUserSeq' sicher kennen
+      if (color.id !== seq[currentStep].id) {
+        setIsGameOver(true);
+        return prevUserSeq; // Zustand einfrieren
+      }
 
-    if (nextUserSeq.length === seq.length) {
-      setTimeout(() => startNextLevel(seq), 1200);
-    }
+      if (nextUserSeq.length === seq.length) {
+        setTimeout(() => startNextLevel(seq), 1200);
+      }
+
+      return nextUserSeq;
+    });
   };
 
   // --- HIER IST DIE WEBSOCKET HARDWARE INTEGRATION ---
@@ -155,25 +182,49 @@ export default function App() {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: '110px', height: '110px', backgroundColor: '#151515', borderRadius: '50%',
-          border: '8px solid #222', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: '110px',
+          height: '110px',
+          backgroundColor: '#151515',
+          borderRadius: '50%',
+          border: '8px solid #222',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.5)'
         }}>
           {sequence.length === 0 && (
             <button onClick={startGame} style={{ 
-              padding: '6px 12px', fontSize: '13px', fontWeight: 'bold', cursor: 'pointer', 
-              borderRadius: '20px', backgroundColor: '#e74c3c', color: '#fff', border: 'none',
+              padding: '6px 12px',
+              fontSize: '13px',
+              fontWeight: 'bold',
+              cursor: 'pointer', 
+              borderRadius: '20px',
+              backgroundColor: '#e74c3c',
+              color: '#fff',
+              border: 'none',
               boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
-            }}>START</button>
+            }}>
+              START
+            </button>
           )}
           {sequence.length > 0 && !isGameOver && (
-            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#bdc3c7' }}>{sequence.length}</span>
+            <span style={{ fontSize: '24px', fontWeight: 'bold', color: '#bdc3c7' }}>
+            {sequence.length}
+            </span>
           )}
           {isGameOver && (
             <button onClick={startGame} style={{ 
-              padding: '6px 10px', fontSize: '11px', fontWeight: 'bold', cursor: 'pointer', 
-              borderRadius: '20px', backgroundColor: '#34495e', color: '#fff', border: 'none'
-            }}>AGAIN</button>
+              padding: '6px 10px',
+              fontSize: '11px',
+              fontWeight: 'bold',
+              cursor: 'pointer', 
+              borderRadius: '20px',
+              backgroundColor: '#34495e',
+              color: '#fff',
+              border: 'none'
+            }}>
+              AGAIN
+            </button>
           )}
         </div>
       </div>
